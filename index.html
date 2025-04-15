@@ -126,6 +126,20 @@
       border-radius: 10px;
       z-index: 10;
     }
+    #countdown {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 3vw;
+      font-weight: bold;
+      color: #ff6699;
+      z-index: 100;
+      background: rgba(255,255,255,0.8);
+      padding: 20px 40px;
+      border-radius: 20px;
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -139,6 +153,7 @@
       <input type="text" id="word-input" placeholder="단어를 입력하세요" autofocus />
     </div>
     <div id="complete"></div>
+    <div id="countdown"></div>
   </div>  <script>
     const baseWords = ["하도급", "원사업자", "수급사업자", "하도급대금 연동제", "하도급 계약서", "하도급대금", "주요 원재료", "쪼개기 계약 금지", "입찰참가자격 제한", "법정 지급기일 준수", "하도급대금 지급보증", "기술자료요구서 제공", "비밀유지계약 체결", "원가", "징벌적 손해배상책임", "하도급법 준수", "작업지시서 발급", "부당특약 설정 금지", "인테그리티", "Integrity", "벚꽃놀이", "자율활동", "협력사", "하도급법", "공정위 제재"];
     const shuffledWords = baseWords.sort(() => 0.5 - Math.random()).slice(0, 25);
@@ -149,13 +164,14 @@
     const inputBox = document.getElementById("word-input");
     const completeBox = document.getElementById("complete");
     const wordCounter = document.getElementById("word-counter");
+    const countdownBox = document.getElementById("countdown");
 
     let fallingWords = [];
     let timerInterval, dropInterval, startTime;
     let totalWords = 25;
     let typedCount = 0;
     let gameEnded = false;
-    let fallSpeed = 2;
+    let fallSpeed = 1.5;
 
     function calculateSpeed() {
       const screenRatio = window.innerHeight / window.innerWidth;
@@ -213,27 +229,46 @@
       completeBox.style.display = "block";
     }
 
+    function runCountdown(callback) {
+      const steps = ["3", "2", "1", "Start!"];
+      let i = 0;
+      countdownBox.style.display = "block";
+      countdownBox.textContent = steps[i];
+      const countdownInterval = setInterval(() => {
+        i++;
+        if (i < steps.length) {
+          countdownBox.textContent = steps[i];
+        } else {
+          clearInterval(countdownInterval);
+          countdownBox.style.display = "none";
+          callback();
+        }
+      }, 1000);
+    }
+
     function startGame() {
       calculateSpeed();
       startBtn.style.display = "none";
       restartBtn.style.display = "block";
-      inputArea.style.display = "block";
       completeBox.style.display = "none";
       fallingWords = [];
       typedCount = 0;
       updateCounter();
       gameEnded = false;
-      shuffledWords.forEach((w, i) => {
-        setTimeout(() => {
-          if (!gameEnded) createWord(w);
-        }, i * 1500);
+      runCountdown(() => {
+        inputArea.style.display = "block";
+        shuffledWords.forEach((w, i) => {
+          setTimeout(() => {
+            if (!gameEnded) createWord(w);
+          }, i * 1500);
+        });
+        setTimeout(() => dropWords(), 1000);
+        startTime = Date.now();
+        timerInterval = setInterval(() => {
+          const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+          document.getElementById("timer").innerText = `${elapsed}초`;
+        }, 100);
       });
-      setTimeout(() => dropWords(), 1000);
-      startTime = Date.now();
-      timerInterval = setInterval(() => {
-        const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
-        document.getElementById("timer").innerText = `${elapsed}초`;
-      }, 100);
     }
 
     startBtn.addEventListener("click", startGame);
